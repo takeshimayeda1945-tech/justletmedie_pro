@@ -1,0 +1,36 @@
+# docker compose -f docker-compose-mysql-phpmyadmin.yaml up -d
+# docker compose -f docker-compose-mysql-phpmyadmin.yaml down
+
+networks:
+  mysql-network:
+    name: mysql-network
+
+services:
+  mysql:
+    image: mysql
+    container_name: mysql
+    restart: always
+    ports:
+      - 3306:3306
+    volumes:
+       - ./mysql-data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+#      MYSQL_USER: user
+#      MYSQL_PASSWORD: user
+#      MYSQL_DATABASE: data
+    networks:
+      - mysql-network
+      
+  phpmyadmin:
+    image: phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    ports:
+      - 8080:80
+    environment:
+      PMA_HOSTS: mysql
+#      PMA_USER: root
+#      PMA_PASSWORD: root
+    networks:
+      - mysql-network

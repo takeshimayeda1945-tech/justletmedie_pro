@@ -1,0 +1,75 @@
+import React from 'react';
+import '../assets/Propertie.css';
+
+// 🔹 คอมโพเนนต์ CategoryModal ใช้สำหรับเลือกประเภทของอสังหาริมทรัพย์
+const CategoryModal = ({ 
+  show,               // สถานะเปิด/ปิดโมดัล
+  onClose,            // ฟังก์ชันปิดโมดัล
+  selectedCategory,   // หมวดหมู่ที่ถูกเลือกอยู่ในปัจจุบัน
+  onCategoryChange,   // ฟังก์ชันเมื่อผู้ใช้เลือกหมวดหมู่ใหม่
+  onApply             // ฟังก์ชันกดปุ่ม Apply เพื่อยืนยัน
+}) => {
+
+  // 🔻 รายการหมวดหมู่ที่จะแสดงในโมดัล
+  const categories = [
+    'ทั้งหมด',
+    'คอนโดมิเนียม',
+    'บ้านเดี่ยว',
+    'บ้านแฝด',
+    'ทาวน์เฮ้าส์',
+    'อพาร์ตเมนต์',
+    'วิลล่า',
+    'ที่ดิน'
+  ];
+
+  // ถ้า show = false ให้ไม่แสดงโมดัล
+  if (!show) return null;
+
+  return (
+    // 🔻 พื้นหลัง overlay คลิกแล้วปิดโมดัล
+    <div className="m-overlay active" onClick={onClose}>
+      
+      {/* 🔻 กล่องเนื้อหาโมดัล คลิกด้านในจะไม่ปิด */}
+      <div className="m-content" onClick={(e) => e.stopPropagation()}>
+        
+        {/* 🔻 ส่วนหัวโมดัล */}
+        <div className="m-header">
+          หมวดหมู่
+        </div>
+
+        {/* 🔻 เนื้อหาแสดงรายการหมวดหมู่ทั้งหมด */}
+        <div className="m-body">
+          {categories.map((category, index) => (
+            <label key={index} className="category-option">
+              
+              {/* ปุ่มเลือกแบบ checkbox */}
+              <input
+                type="checkbox"
+                value={category}
+                checked={selectedCategory.includes(category)} // ตรวจสอบว่าหมวดหมู่นี้ถูกเลือกหรือไม่
+                onChange={(e) => onCategoryChange(e.target.value)} // ส่งค่าหมวดหมู่กลับไปยัง parent
+                style={{ marginRight: '8px' }}
+              />
+
+              {/* ชื่อหมวดหมู่ */}
+              <span className="category-label">{category}</span>
+            </label>
+          ))}
+        </div>
+
+        {/* 🔻 ปุ่มส่วนท้ายโมดัล */}
+        <div className="m-footer">
+          <button className="cancel-btn" onClick={onClose}>
+            ยกเลิก   {/* ปิดโมดัลโดยไม่บันทึก */}
+          </button>
+          <button className="apply-btn" onClick={onApply}>
+            ตกลง    {/* บันทึกและปิดโมดัล */}
+          </button>
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+export default CategoryModal;

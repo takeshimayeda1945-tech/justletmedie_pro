@@ -1,0 +1,17 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap');
+
+.fontmenu{
+    font-family: "Instrument Sans", sans-serif;
+}
+.Menu {
+  text-decoration: none; /* ปิดเส้นใต้ปกติ */
+}
+
+.Menu:hover {
+  text-decoration: underline; /* เส้นใต้เมื่อ hover */
+}
+.notiimg{
+    width: 200px;
+    height: 200px;
+}

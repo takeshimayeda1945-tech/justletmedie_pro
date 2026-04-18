@@ -1,0 +1,23 @@
+# MySQL / DB (กันทุกที่ทุกระดับ)
+**/mysql-data/
+**/Databases/
+**/*.ibd
+**/binlog.*
+**/#ib_*
+
+# MySQL folder (สำคัญสุด)
+Project-main/Project-Backend/Databases/mysql-data/
+
+# หรือกันทั้ง folder
+Databases/
+mysql-data/
+
+# Node (ถ้าใช้)
+node_modules/
+
+# Env
+.env
+
+# OS
+.DS_Store
+Thumbs.db

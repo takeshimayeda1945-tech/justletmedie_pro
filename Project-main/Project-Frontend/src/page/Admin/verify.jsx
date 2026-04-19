@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { fetchVerifyUsers } from "../../data/VerifyData";
 import { Table, InputGroup, Form, Button, Modal, Row, Col } from "react-bootstrap";
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import VerifyDoc from '../../assets/verifydocument.pdf'
@@ -26,19 +25,35 @@ const Verify = () => {
       setUsers(usersRaw);
     } else {
       const filtered = usersRaw.filter((user) => {
-        return (
-          user.name.toLowerCase().includes(text) ||
-          user.userId?.toLowerCase().includes(text) ||
-          user.id.toString().includes(text)
-        );
+        // เช็คให้ปลอดภัยก่อนค้นหา
+        const nameMatch = user.name ? user.name.toLowerCase().includes(text) : false;
+        const userIdMatch = user.userId ? user.userId.toString().toLowerCase().includes(text) : false;
+        const idMatch = user.id ? user.id.toString().includes(text) : false;
+
+        return nameMatch || userIdMatch || idMatch;
       });
       setUsers(filtered);
+      setCurrentPage(1); // 🌟 เพิ่มอันนี้: ค้นหาแล้วให้กลับมาหน้า 1 เสมอ ไม่งั้นถ้าอยู่หน้า 3 แล้วค้นหา หน้าอาจจะว่าง
     }
   }, [searchText, usersRaw]);
 
   useEffect(() => {
-    const data = fetchVerifyUsers();
-    setUsersRaw(data);
+    const fetchData = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/admin/verify-seller");
+        const data = await res.json();
+
+        console.log("DATA:", data); // 👈 สำคัญ เอาไว้เช็ค
+
+        setUsersRaw(data);
+        setUsers(data);
+
+      } catch (err) {
+        console.error("ERROR:", err);
+      }
+    };
+
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -48,46 +63,100 @@ const Verify = () => {
   //  ฟังก์ชันเมื่อกดปุ่มค้นหา
   const handleSearch = () => {
     if (searchText.trim() === "") {
-      // ถ้าช่องว่าง แสดงทั้งหมด
       setUsers(usersRaw);
     } else {
+      const text = searchText.toLowerCase().trim();
       const filtered = usersRaw.filter((user) => {
-        // ค้นหาด้วยชื่อ หรือ id (ไม่สนตัวพิมพ์ใหญ่เล็ก)
-        const text = searchText.toLowerCase();
-        return (
-          user.name.toLowerCase().includes(text) ||
-          user.userId?.toLowerCase().includes(text) ||
-          user.id.toString().includes(text)
-        );
+        // เช็คให้ปลอดภัยก่อนค้นหา (เหมือนด้านบน)
+        const nameMatch = user.name ? user.name.toLowerCase().includes(text) : false;
+        const userIdMatch = user.userId ? user.userId.toString().toLowerCase().includes(text) : false;
+        const idMatch = user.id ? user.id.toString().includes(text) : false;
+
+        return nameMatch || userIdMatch || idMatch;
       });
       setUsers(filtered);
+      setCurrentPage(1); // 🌟 ค้นหาแล้วให้กลับมาหน้า 1 ด้วย
     }
   };
-  const handleDeleteUser = async () => {
+
+  const handleApproveUser = async () => {
     if (!selectedUser) return;
 
     try {
-      const res = await fetch(`http://localhost:3000/admin/${selectedUser.id}`, {
+      const res = await fetch(`http://localhost:3000/admin/approve-seller`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: selectedUser.id,
+          username: selectedUser.name,     // ใช้ .name ตามที่ query AS name มา
+          namesurname: selectedUser.NS,    // ใช้ .NS ตามที่ query AS NS มา
+          email: selectedUser.email,
+          phone: selectedUser.phone,
+          address: selectedUser.address,
+          role_id: 2                       // บังคับให้เป็น Role Seller
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert("ยืนยันตัวตนสำเร็จ!");
+
+        // ลบคนที่อนุมัติแล้วออกจากตารางบนหน้าเว็บ
+        const updated = usersRaw.filter(u => u.id !== selectedUser.id);
+        setUsersRaw(updated);
+        setUsers(updated);
+
+        // ปิด Modal
+        setLgShow(false);
+      } else {
+        alert("เกิดข้อผิดพลาด: " + data.message);
+      }
+
+    } catch (err) {
+      console.error("ERROR:", err);
+      alert("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
+    }
+  };
+
+  const handleRejectUser = async () => {
+    if (!selectedUser) return;
+
+    // 1. ถามเพื่อความแน่ใจก่อนลบ
+    const confirmReject = window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธคำขอของ ${selectedUser.name}?`);
+    if (!confirmReject) return; // ถ้ากดยกเลิก ให้หยุดการทำงาน
+
+    try {
+      // 2. ยิง API ไปลบข้อมูลที่ Backend
+      const res = await fetch(`http://localhost:3000/admin/reject-seller/${selectedUser.id}`, {
         method: "DELETE"
       });
 
       const data = await res.json();
-      console.log("SUSPEND:", data);
 
-      // อัปเดตหน้าเว็บ (ไม่ต้องลบ user แล้ว)
-      const updated = usersRaw.map(u =>
-        u.id === selectedUser.id ? { ...u, status: "suspended" } : u
-      );
+      if (res.ok) {
+        alert("ปฏิเสธคำขอสำเร็จ ระบบได้ลบข้อมูลคำขอนี้แล้ว");
 
-      setUsersRaw(updated);
-      setUsers(updated);
+        // 3. อัปเดตหน้าเว็บ ลบคนที่ถูกปฏิเสธออกจากตาราง
+        const updated = usersRaw.filter(u => u.id !== selectedUser.id);
+        setUsersRaw(updated);
+        setUsers(updated);
 
-      setLgShow(false);
+        // 4. ปิด Modal
+        setLgShow(false);
+      } else {
+        alert("เกิดข้อผิดพลาด: " + data.message);
+      }
 
     } catch (err) {
       console.error("ERROR:", err);
+      alert("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
     }
   };
+
+
   return (
     <>
       {/* modalstart */}
@@ -139,26 +208,32 @@ const Verify = () => {
 
               {/* ข้อมูลตัว user */}
               <div className="mt-4" style={{ lineHeight: "2rem" }}>
-                <p><strong>ชื่อผู้ใช้งาน :</strong> {selectedUser.name}</p>
                 <p><strong>User ID :</strong> {selectedUser.userId}</p>
+                <p><strong>ชื่อผู้ใช้งาน :</strong> {selectedUser.name}</p>
+                <p><strong>ชื่อและนามสกุล :</strong> {selectedUser.NS}</p>
                 <p><strong>บทบาท :</strong> {selectedUser.role}</p>
                 <p><strong>ที่อยู่ :</strong> {selectedUser.address ?? "-"}</p>
                 <p><strong>เบอร์ติดต่อ :</strong> {selectedUser.phone ?? "-"}</p>
                 <p><strong>Email :</strong> {selectedUser.email ?? "-"}</p>
                 {selectedUser.role === "Seller" && (
-                  <a href={VerifyDoc} download >ดาวน์โหลดเอกสารยืนยันตัวตนคนขาย</a>
+                  <a
+                    href={`http://localhost:3000/download/${selectedUser.document}`}
+                    download
+                  >
+                    ดาวน์โหลดเอกสารยืนยันตัวตนคนขาย
+                  </a>
                 )}
 
               </div>
 
               {/* ปุ่มระงับบัญชี */}
               <div className="d-flex justify-content-end mt-3">
-                <Button variant="danger" onClick={handleDeleteUser}>
-                  ระงับบัญชี
+                <Button variant="success" onClick={handleApproveUser}> {/* ✅ แก้เป็นชื่อฟังก์ชันใหม่ */}
+                  ยืนยันตัวตน
                 </Button>
-
-                <Button variant="secondary" onClick={() => setLgShow(false)}>
-                  ปิด
+                &nbsp;
+                <Button variant="danger" onClick={handleRejectUser}>
+                  ปฏิเสธ
                 </Button>
               </div>
             </>
@@ -257,11 +332,11 @@ const Verify = () => {
           Prev
         </Button>
 
-        <span>{currentPage} / {totalPages}</span>
+        <span>{currentPage} / {totalPages === 0 ? 1 : totalPages}</span>
 
         <Button
           variant="dark"
-          disabled={currentPage === totalPages}
+          disabled={currentPage === totalPages || totalPages === 0}
           onClick={() => setCurrentPage(currentPage + 1)}
         >
           Next

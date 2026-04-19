@@ -52,28 +52,6 @@ const Property = () => {
   const [maxPrice, setMaxPrice] = useState('');
   const [minPrice, setMinPrice] = useState('');
 
-  // ข้อมูลอสังหาจาก backend
-  const [properties, setProperties] = useState(SellerData);
-
-  useEffect(() => {
-    const fetchProperties = async () => {
-      try {
-        const response = await fetch('http://localhost:3000/api/properties');
-        if (!response.ok) {
-          throw new Error(`Fetch error: ${response.status}`);
-        }
-        const result = await response.json();
-        if (result && Array.isArray(result.data)) {
-          setProperties(result.data);
-        }
-      } catch (error) {
-        console.error('Load properties failed:', error);
-      }
-    };
-
-    fetchProperties();
-  }, []);
-
   /* --------------------------- ฟังก์ชันจัดการ Modal --------------------------- */
 
   // เมื่อกด Apply ที่ CategoryModal
@@ -118,7 +96,7 @@ const Property = () => {
 
   /* --------------------------- ฟิลเตอร์ข้อมูลอสังหา --------------------------- */
 
-  const filteredProperties = properties.filter((property) => {
+  const filteredProperties = SellerData.filter((property) => {
     const priceNum = parsePrice(property.price);
 
     // ฟิลเตอร์คำค้น

@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 import { Link } from 'react-router-dom';
+import { SellerData } from "../../data/SellerData";
 
 // ---------- Styled Components ---------- //
 const PageWrapper = styled.div`
@@ -327,8 +328,8 @@ const PropertyCard = ({ property }) => (
 );
 
 // Property Grid Component
-const PropertyGrid = ({ properties, limit }) => {
-  const displayedProperties = limit ? properties.slice(0, limit) : properties;
+const PropertyGrid = ({ SellerData, limit }) => {
+  const displayedProperties = limit ? SellerData.slice(0, limit) : SellerData;
   return (
     <>
       {displayedProperties.map((property) => (
@@ -340,29 +341,31 @@ const PropertyGrid = ({ properties, limit }) => {
 
 // ---------- Main Component ---------- //
 const HomeSeller = () => {
-  const [properties, setProperties] = useState([]);
-  const [adsVisibility, setAdsVisibility] = useState({ right: true, left: true });
-
-  useEffect(() => {
-    fetch('http://localhost:3000/api/properties')
-      .then(res => res.json())
-      .then(res => setProperties(res.data || []))
-      .catch(console.error);
-  }, []);
+  const [adsVisibility, setAdsVisibility] = useState({
+    right: true,
+    left: true
+  });
 
   const handleCloseAds = (position) => {
-    setAdsVisibility(prev => ({ ...prev, [position]: false }));
+    setAdsVisibility(prev => ({
+      ...prev,
+      [position]: false
+    }));
   };
 
   const handleShowAds = (position) => {
-    setAdsVisibility(prev => ({ ...prev, [position]: true }));
+    setAdsVisibility(prev => ({
+      ...prev,
+      [position]: true
+    }));
   };
 
-  const condoProperties     = properties.filter(p => p.type === "คอนโดมิเนียม");
-  const houseProperties     = properties.filter(p => p.type === "บ้านเดี่ยว");
-  const villaProperties     = properties.filter(p => p.type === "วิลล่า");
-  const townhouseProperties = properties.filter(p => p.type === "ทาวน์เฮ้าส์");
-  const apartmentProperties = properties.filter(p => p.type === "อพาร์ตเมนต์");
+  // Filter properties by type (ใช้ข้อมูลจาก properties ที่ import มา)
+  const condoProperties = SellerData.filter(property => property.type === "คอนโดมิเนียม");
+  const houseProperties = SellerData.filter(property => property.type === "บ้านเดี่ยว");
+  const villaProperties = SellerData.filter(property => property.type === "วิลล่า");
+  const townhouseProperties = SellerData.filter(property => property.type === "ทาวน์เฮ้าส์");
+  const apartmentProperties = SellerData.filter(property => property.type === "อพาร์ตเมนต์");
 
   return (
     <PageWrapper>
@@ -453,7 +456,7 @@ const HomeSeller = () => {
           <MoreDetail as={Link} to="/seller/property">more detail</MoreDetail>
         </SectionHeader>
         <CardGrid>
-            <PropertyGrid properties={properties.slice(0, 4)} />
+            <PropertyGrid SellerData={SellerData.slice(0, 4)} />
         </CardGrid>
       </Section>
 
@@ -464,7 +467,7 @@ const HomeSeller = () => {
           <MoreDetail as={Link} to="/seller/property?type=คอนโดมิเนียม">more detail</MoreDetail>
         </SectionHeader>
         <CardGrid>
-            <PropertyGrid properties={condoProperties.slice(0, 4)} />
+            <PropertyGrid SellerData={condoProperties.slice(0, 4)} />
         </CardGrid>
       </Section>
 
@@ -475,7 +478,7 @@ const HomeSeller = () => {
           <MoreDetail as={Link} to="/seller/property?type=บ้านเดี่ยว">more detail</MoreDetail>
         </SectionHeader>
         <CardGrid>
-            <PropertyGrid properties={houseProperties.slice(0, 4)} />
+            <PropertyGrid SellerData={houseProperties.slice(0, 4)} />
         </CardGrid>
       </Section>
 
@@ -486,7 +489,7 @@ const HomeSeller = () => {
           <MoreDetail as={Link} to="/seller/property?type=วิลล่า">more detail</MoreDetail>
         </SectionHeader>
         <CardGrid>
-            <PropertyGrid properties={villaProperties.slice(0, 4)} />
+            <PropertyGrid SellerData={villaProperties.slice(0, 4)} />
         </CardGrid>
       </Section>
 
@@ -497,7 +500,7 @@ const HomeSeller = () => {
           <MoreDetail as={Link} to="/seller/property?type=ทาวน์เฮ้าส์">more detail</MoreDetail>
         </SectionHeader>
         <CardGrid>
-            <PropertyGrid properties={townhouseProperties.slice(0, 4)} />
+            <PropertyGrid SellerData={townhouseProperties.slice(0, 4)} />
         </CardGrid>
       </Section>
 

@@ -1,49 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Button, Container, Row, Col, Form } from 'react-bootstrap';
 
 const Stat = () => {
 
-  // สถิติตามช่วงเวลา
+  // สถิติตามช่วงเวลา (สำหรับอสังหาฯ - คงข้อมูลเดิมไว้)
   const statsData = {
-    week: {
-      estate_total: 120,
-      estate_sold: 80,
-      estate_unsold: 40,
-      users_total: 300,
-      buyers: 180,
-      sellers: 120
-    },
-    month: {
-      estate_total: 500,
-      estate_sold: 340,
-      estate_unsold: 160,
-      users_total: 700,
-      buyers: 400,
-      sellers: 300
-    },
-    halfyear: {
-      estate_total: 2000,
-      estate_sold: 1500,
-      estate_unsold: 500,
-      users_total: 3000,
-      buyers: 1800,
-      sellers: 1200
-    },
-    year: {
-      estate_total: 3000,
-      estate_sold: 2200,
-      estate_unsold: 800,
-      users_total: 5000,
-      buyers: 2800,
-      sellers: 2200
-    }
+    week: { estate_total: 120, estate_sold: 80, estate_unsold: 40 },
+    month: { estate_total: 500, estate_sold: 340, estate_unsold: 160 },
+    halfyear: { estate_total: 2000, estate_sold: 1500, estate_unsold: 500 },
+    year: { estate_total: 3000, estate_sold: 2200, estate_unsold: 800 }
   };
 
-  // state สำหรับเก็บช่วงเวลา
   const [period, setPeriod] = useState("week");
-
-  // ค่า stat ปัจจุบัน
   const current = statsData[period];
+
+  // ----- State สำหรับเก็บข้อมูลออนไลน์จาก Backend -----
+  const [onlineStats, setOnlineStats] = useState({
+    total: 0,
+    buyers: 0,
+    sellers: 0
+  });
+  const [totalUsers, setTotalUsers] = useState(0);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch('http://localhost:3000/admin/stats');
+        if (res.ok) {
+          const data = await res.json();
+          setTotalUsers(data.totalUsers);
+          setOnlineStats({
+            total: data.activeTotal || 0,
+            buyers: data.activeBuyers || 0,
+            sellers: data.activeSellers || 0
+          });
+        }
+      } catch (err) {
+        console.error("Fetch stats failed", err);
+      }
+    };
+
+    fetchStats();
+    const statsInterval = setInterval(fetchStats, 10000); // อัปเดตข้อมูลทุก 10 วินาที
+    return () => clearInterval(statsInterval);
+  }, []);
+  // --------------------------------------------------
 
   return (
     <>
@@ -58,14 +59,15 @@ const Stat = () => {
               value={period}
               onChange={(e) => setPeriod(e.target.value)}
             >
+              <option value="week">ปัจจุบัน</option>
               <option value="week">1 สัปดาห์</option>
               <option value="month">1 เดือน</option>
-              <option value="halfyear">6 เดือน</option>
+              <option value="halfyear">3 เดือน</option>
               <option value="year">1 ปี</option>
             </Form.Select>
           </div>
 
-          {/* ส่วนอสังหา */}
+          {/* ส่วนอสังหา (คงเดิม) */}
           <Card className="mb-4 shadow-sm border-0" style={{ backgroundColor: '#eef3fb' }}>
             <Card.Body>
               <Row className="text-center">
@@ -90,26 +92,32 @@ const Stat = () => {
             </Card.Body>
           </Card>
 
-          {/* ส่วนผู้ใช้งาน */}
+          {/* ส่วนผู้ใช้งาน (ปรับเป็น 4 คอลัมน์ และใช้ข้อมูลจาก Backend) */}
           <Card className="mb-4 shadow-sm border-0" style={{ backgroundColor: '#eef3fb' }}>
             <Card.Body>
               <Row className="text-center">
-                <Col md={4}>
+                <Col md={3}>
+                  <i className="bi bi-person-workspace" style={{ fontSize: '2.5rem', color: '#ff4d4f' }}></i>
+                  <p className="fw-semibold mt-2 mb-0">ออนไลน์รวม <span style={{color: '#00b140'}}>●</span></p>
+                  <h5 className="fw-bold text-danger">{onlineStats.total}</h5>
+                </Col>
+
+                <Col md={3}>
+                  <i className="bi bi-cart-check-fill" style={{ fontSize: '2.5rem', color: '#00b140' }}></i>
+                  <p className="fw-semibold mt-2 mb-0">ผู้ซื้อ (ออนไลน์)</p>
+                  <h5 className="fw-bold text-success">{onlineStats.buyers}</h5>
+                </Col>
+
+                <Col md={3}>
+                  <i className="bi bi-shop" style={{ fontSize: '2.5rem', color: '#f7b500' }}></i>
+                  <p className="fw-semibold mt-2 mb-0">ผู้ขาย (ออนไลน์)</p>
+                  <h5 className="fw-bold text-warning">{onlineStats.sellers}</h5>
+                </Col>
+
+                <Col md={3}>
                   <i className="bi bi-people-fill" style={{ fontSize: '2.5rem', color: '#0045FF' }}></i>
-                  <p className="fw-semibold mt-2 mb-0">จำนวนผู้ใช้งาน</p>
-                  <h5 className="fw-bold">{current.users_total}</h5>
-                </Col>
-
-                <Col md={4}>
-                  <i className="bi bi-person-fill" style={{ fontSize: '2.5rem', color: '#00b140' }}></i>
-                  <p className="fw-semibold mt-2 mb-0">ผู้ซื้อ</p>
-                  <h5 className="fw-bold">{current.buyers}</h5>
-                </Col>
-
-                <Col md={4}>
-                  <i className="bi bi-person-badge-fill" style={{ fontSize: '2.5rem', color: '#f7b500' }}></i>
-                  <p className="fw-semibold mt-2 mb-0">ผู้ขาย</p>
-                  <h5 className="fw-bold">{current.sellers}</h5>
+                  <p className="fw-semibold mt-2 mb-0">ผู้ใช้งานทั้งหมด</p>
+                  <h5 className="fw-bold">{totalUsers}</h5>
                 </Col>
               </Row>
             </Card.Body>

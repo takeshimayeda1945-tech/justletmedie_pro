@@ -40,6 +40,8 @@ import PrivacyPolicy from "./page/Seller/PrivaryPolicy";
 import PolicyUse from "./page/Seller/PolicyUse";
 import ConditionsOf from "./page/Seller/ConditionsOf";
 import TermsSale from "./page/Seller/TermsSale";
+import Postguide from "./page/Admin/guide";
+
 
 
 function App() {
@@ -54,6 +56,8 @@ function App() {
           <Route path="sellerlist" element={<Sellerlist />} />
           <Route path="stat" element={<Stat />} />
           <Route path="verify" element={<Verify />} />
+          <Route path="postguide" element={<Postguide />} />
+
           
         </Route>
         <Route path="buyer" element={<UserAppLayout />}>
@@ -64,7 +68,7 @@ function App() {
           <Route path='tgrent' element={<TradingGuideRent />} />
           <Route path='tgseller' element={<TradingGuideSeller />} />
           <Route path='tgfinancing' element={<TradingGuideFinancing />} />
-          <Route path='tgarticle' element={<TradingGuideArticle />} />
+          <Route path='tgarticle/:id' element={<TradingGuideArticle />} />
           <Route path="login" element={<Login />} />
 
           {/* <Route path='*' element={<ForwardToLogin />} /> */}
@@ -83,7 +87,7 @@ function App() {
           <Route path='tgbuyer' element={<TradingGuideBuyerS />} />
           <Route path='tgseller' element={<TradingGuideSellerS />} />
           <Route path='tgfinancing' element={<TradingGuideFinancingS />} />
-          <Route path='tgarticle' element={<TradingGuideArticleS />} />
+          <Route path='tgarticle/:id' element={<TradingGuideArticleS />} />
           <Route path="login" element={<Login />} />
 
           {/* <Route path='*' element={<ForwardToLogin />} /> */}

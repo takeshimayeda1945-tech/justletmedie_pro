@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { fetchGuideData } from "../../../data/TradingGuide-Data";
 import { useEffect, useState } from "react";
 
 
@@ -9,9 +8,20 @@ const TradingGuide = () => {
   const [GuideDataRaw, SetGuideDataRaw] = useState([])
 
   useEffect(() => {
-    SetGuideDataRaw(fetchGuideData())
-  }, [])
+    const fetchArticles = async () => {
+      const res = await fetch('http://localhost:3000/articles')
+      const data = await res.json()
 
+      if (Array.isArray(data)) {
+        SetGuideDataRaw(data)
+      } else {
+        console.log("API ERROR:", data)
+        SetGuideDataRaw([])
+      }
+    }
+
+    fetchArticles()
+  }, [])
   useEffect(() => {
     console.log(GuideDataRaw)
   }, [GuideDataRaw])
@@ -102,7 +112,7 @@ const TradingGuide = () => {
       >
         {GuideDataRaw.map((item, index) => (
           <div
-            key={index}
+            key={item.id}
             style={{
               display: "flex",
               gap: "20px",
@@ -112,7 +122,7 @@ const TradingGuide = () => {
             }}
           >
             <img
-              src={item.img}
+              src={item.image}
               alt={item.title}
               style={{
                 width: "220px",
@@ -124,14 +134,14 @@ const TradingGuide = () => {
 
             <div style={{ flex: 1 }}>
               <h3 style={{ fontSize: "20px", fontWeight: "bold", marginBottom: "8px" }}>
-                {item.name}
+                {item.title}
               </h3>
 
               <p style={{ color: "#555", lineHeight: 1.5 }}>
-                {item.section}
+                {item.description}
               </p>
 
-              <Link to={"/buyer/tgarticle"} style={{ color: "#0d6efd", textDecoration: "none", fontWeight: "500" }}>
+              <Link to={`/buyer/tgarticle/${item.id}`}>
                 อ่านต่อ →
               </Link>
             </div>

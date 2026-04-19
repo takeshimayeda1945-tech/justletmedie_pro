@@ -22,44 +22,51 @@ const RegisterasSeller = () => {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // ตรวจสอบข้อมูลครบ
     if (!fullname || !username || !password || !confirmPassword || !address || !email || !phone || !file) {
       setError("กรุณากรอกข้อมูลให้ครบทุกช่องและแนบเอกสาร");
       return;
     }
 
-    // ตรวจสอบรหัสผ่านตรงกัน
     if (password !== confirmPassword) {
       setError("รหัสผ่านไม่ตรงกัน");
       return;
     }
 
-    setError("");
+    try {
+      const formData = new FormData();
 
-    // แสดงข้อความรออนุมัติ
-    setSuccessMessage(alert("รอการอนุมัติ ภายใน 3 วัน"));
+      formData.append("namesurname", fullname);
+      formData.append("username", username);
+      formData.append("password", password);
+      formData.append("address", address);
+      formData.append("email", email);
+      formData.append("phone", phone);
+      formData.append("file", file);
 
-    // ล้างฟอร์ม
-    setFullname("");
-    setUsername("");
-    setPassword("");
-    setConfirmPassword("");
-    setAddress("");
-    setEmail("");
-    setPhone("");
-    setFile(null);
+      const res = await fetch("http://localhost:3000/auth/register-seller", {
+        method: "POST",
+        body: formData
+      });
 
-    // redirect ไปหน้า Login หลังจาก 2 วินาที (2000 ms)
-    setTimeout(() => {
-      navigate("/login");
-    }, 2000);
+      const data = await res.json();
+
+      if (res.ok) {
+        alert("รอการอนุมัติ ภายใน 3 วัน");
+        navigate("/login");
+      } else {
+        setError(data.message);
+      }
+
+    } catch (err) {
+      setError("เชื่อม server ไม่ได้");
+    }
   };
 
   return (
-    <div 
+    <div
       style={{
         width: "100vw",
         height: "100vh",
@@ -210,7 +217,7 @@ const RegisterasSeller = () => {
           </div>
         </form>
       </div>
-      
+
     </div>
   );
 };

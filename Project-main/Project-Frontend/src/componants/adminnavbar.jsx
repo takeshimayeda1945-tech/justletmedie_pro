@@ -21,12 +21,8 @@ const AdminNavbar = () => {
         <div className="flex items-center space-x-6 gap-5">
           <Link to={'stat'} className='Menu text-white'>Statistics</Link>
           <Link to={'sellerlist'} className='Menu text-white'>Userlist</Link>
-          {/* <Link to={'buyerlist'} className='Menu text-white'>BuyerList</Link> */} 
           <Link to={'verify'} className='Menu text-white'>Verify-seller</Link>
-        {/* <a href="#" className="Menu text-white">Stats</a>
-        <a href="#" className="Menu text-white">Userlist</a>
-        <a href="#" className="Menu text-white">Sellerlist</a>
-        <a href="#" className="Menu text-white">Verify-seller</a> */}
+          <Link to={'postguide'} className='Menu text-white'>New guide</Link>
         </div>
       </div>
        <div className="flex items-center p-10">

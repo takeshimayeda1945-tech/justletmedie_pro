@@ -1,19 +1,5 @@
-import fs from 'fs'
 import express from 'express'
-import multer from 'multer'
-import path from 'path'
-import { fileURLToPath } from 'url'
-import { getAllProperties, getPropertyById, createProperty } from '../controllers/propertyControllers.js'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-const uploadFolder = path.join(__dirname, '../../uploads')
-
-if (!fs.existsSync(uploadFolder)) {
-  fs.mkdirSync(uploadFolder, { recursive: true })
-}
-
-const upload = multer({ dest: uploadFolder })
+import { properties } from '../data/propertiesData.js'
 
 const router = express.Router()
 
@@ -74,19 +60,12 @@ router.get('/test', (req, res) => {
  *                   items:
  *                     $ref: '#/components/schemas/Property'
  */
-router.get('/api/properties', async (req, res) => {
-    try {
-        const host = `${req.protocol}://${req.get('host')}`
-        const result = await getAllProperties(host)
-        res.json({
-            success: true,
-            message: 'ข้อมูลอสังหาทั้งหมด',
-            data: result
-        })
-    } catch (error) {
-        console.error(error)
-        res.status(500).json({ success: false, message: 'ไม่สามารถดึงข้อมูลอสังหาได้' })
-    }
+router.get('/api/properties', (req, res) => {
+    res.json({
+        success: true,
+        message: 'ข้อมูลอสังหาทั้งหมด',
+        data: properties
+    })
 })
 
 /**
@@ -118,26 +97,20 @@ router.get('/api/properties', async (req, res) => {
  *                 data:
  *                   $ref: '#/components/schemas/Property'
  */
-router.get('/api/properties/:id', async (req, res) => {
-    try {
-        const { id } = req.params
-        const host = `${req.protocol}://${req.get('host')}`
-        const found = await getPropertyById(id, host)
-        if (!found) {
-            return res.status(404).json({
-                success: false,
-                message: `ไม่พบอสังหา id ${id}`
-            })
-        }
-        res.json({
-            success: true,
-            message: `ข้อมูลอสังหาหมายเลข ${id}`,
-            data: found
+router.get('/api/properties/:id', (req, res) => {
+    const { id } = req.params
+    const found = properties.find((item) => String(item.id) === String(id))
+    if (!found) {
+        return res.status(404).json({
+            success: false,
+            message: `ไม่พบอสังหา id ${id}`
         })
-    } catch (error) {
-        console.error(error)
-        res.status(500).json({ success: false, message: 'ไม่สามารถดึงข้อมูลอสังหาได้' })
     }
+    res.json({
+        success: true,
+        message: `ข้อมูลอสังหาหมายเลข ${id}`,
+        data: found
+    })
 })
 
 /**
@@ -150,49 +123,29 @@ router.get('/api/properties/:id', async (req, res) => {
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             required:
  *               - name
  *               - address
+ *               - price
  *               - type
- *               - saleType
  *             properties:
  *               name:
  *                 type: string
  *               address:
  *                 type: string
- *               priceSale:
+ *               image:
  *                 type: string
- *               priceRent:
+ *               rooms:
+ *                 type: integer
+ *               date:
+ *                 type: string
+ *               price:
  *                 type: string
  *               type:
  *                 type: string
- *               saleType:
- *                 type: string
- *               landSize:
- *                 type: string
- *               floor:
- *                 type: string
- *               bedrooms:
- *                 type: string
- *               bathrooms:
- *                 type: string
- *               description:
- *                 type: string
- *               latitude:
- *                 type: number
- *               longitude:
- *                 type: number
- *               nearbyPlaces:
- *                 type: string
- *                 description: JSON stringified array of nearby place objects
- *               images:
- *                 type: array
- *                 items:
- *                   type: string
- *                   format: binary
  *     responses:
  *       201:
  *         description: สร้างอสังหาสำเร็จ
@@ -219,80 +172,73 @@ router.get('/api/properties/:id', async (req, res) => {
  *                 message:
  *                   type: string
  */
-router.post('/api/properties', upload.array('images', 10), async (req, res) => {
-    try {
-        const {
-            name,
-            address,
-            priceSale,
-            priceRent,
-            type,
-            saleType,
-            landSize,
-            floor,
-            bedrooms,
-            bathrooms,
-            description,
-            latitude,
-            longitude,
-            nearbyPlaces
-        } = req.body
+router.post('/api/properties', (req, res) => {
+    const { name, address, image, rooms, date, price, type } = req.body
 
-        const priceValue = priceSale || priceRent || ''
-
-        if (!name || !address || !type) {
-            return res.status(400).json({
-                success: false,
-                message: 'กรุณากรอก name, address, type'
-            })
-        }
-
-        if (!saleType || (!priceSale && !priceRent)) {
-            return res.status(400).json({
-                success: false,
-                message: 'กรุณาเลือก saleType และกรอกราคา'
-            })
-        }
-
-        const storedImages = (req.files || []).map((file) => `uploads/${file.filename}`)
-        if (storedImages.length === 0 && !req.body.image) {
-            return res.status(400).json({
-                success: false,
-                message: 'กรุณาอัพโหลดรูปภาพอย่างน้อย 1 รูป'
-            })
-        }
-
-        const images = storedImages.length ? storedImages : [req.body.image]
-        const host = `${req.protocol}://${req.get('host')}`
-        const created = await createProperty({
-            name,
-            address,
-            images,
-            price: priceValue,
-            propertyType: type,
-            saleType,
-            landSize,
-            floor,
-            bedrooms,
-            bathrooms,
-            description,
-            latitude: latitude ? Number(latitude) : null,
-            longitude: longitude ? Number(longitude) : null,
-            nearbyPlaces
-        }, host)
-
-        res.status(201).json({
-            success: true,
-            message: 'สร้างอสังหาสำเร็จ',
-            data: created
-        })
-    } catch (error) {
-        console.error(error)
-        res.status(500).json({
+    if (!name || !address || (price === undefined || price === null) || !type) {
+        return res.status(400).json({
             success: false,
-            message: 'ไม่สามารถสร้างอสังหาได้'
+            message: 'กรุณากรอก name, address, price, type'
         })
     }
+
+    let normalizedRooms = rooms
+    if (rooms !== undefined && rooms !== null && rooms !== '') {
+        if (typeof normalizedRooms === 'string') {
+            normalizedRooms = Number(normalizedRooms)
+        }
+        if (typeof normalizedRooms !== 'number' || Number.isNaN(normalizedRooms)) {
+            return res.status(400).json({
+                success: false,
+                message: 'rooms ต้องเป็นตัวเลข'
+            })
+        }
+    }
+
+    let normalizedPrice = price
+    if (typeof normalizedPrice === 'string') {
+        normalizedPrice = Number(normalizedPrice.replace(/,/g, '').replace(/\s*บาท\s*/i, ''))
+    }
+    if (typeof normalizedPrice !== 'number' || Number.isNaN(normalizedPrice)) {
+        return res.status(400).json({
+            success: false,
+            message: 'price ต้องเป็นตัวเลข'
+        })
+    }
+
+    let normalizedDate = date
+    if (!normalizedDate) {
+        normalizedDate = new Date().toISOString()
+    } else {
+        const d = new Date(normalizedDate)
+        if (Number.isNaN(d.getTime())) {
+            return res.status(400).json({
+                success: false,
+                message: 'date ต้องเป็นรูปแบบวันที่ที่ถูกต้อง เช่น 2026-03-26'
+            })
+        }
+        normalizedDate = d.toISOString()
+    }
+
+    const nextId = properties.length ? Math.max(...properties.map((p) => p.id)) + 1 : 1
+    const newProperty = {
+        id: nextId,
+        name,
+        address,
+        image: image || '',
+        rooms: normalizedRooms || null,
+        date: normalizedDate,
+        price: normalizedPrice,
+        type
+    }
+
+    properties.push(newProperty)
+
+    res.status(201).json({
+        success: true,
+        message: 'สร้างอสังหาสำเร็จ',
+        data: newProperty
+    })
 })
 
 /**

@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 import { Link } from 'react-router-dom';
+import { properties } from "../../data/propertiesData";
 
 // ---------- Styled Components ---------- //
 const PageWrapper = styled.div`
@@ -302,6 +303,7 @@ const PropertyCard = ({ property }) => (
 // Property Grid Component
 const PropertyGrid = ({ properties, limit }) => {
   const displayedProperties = limit ? properties.slice(0, limit) : properties;
+  
   return (
     <>
       {displayedProperties.map((property) => (
@@ -313,29 +315,31 @@ const PropertyGrid = ({ properties, limit }) => {
 
 // ---------- Main Component ---------- //
 const Home = () => {
-  const [properties, setProperties] = useState([]);
-  const [adsVisibility, setAdsVisibility] = useState({ right: true, left: true });
-
-  useEffect(() => {
-    fetch('http://localhost:3000/api/properties')
-      .then(res => res.json())
-      .then(res => setProperties(res.data || []))
-      .catch(console.error);
-  }, []);
+  const [adsVisibility, setAdsVisibility] = useState({
+    right: true,
+    left: true
+  });
 
   const handleCloseAds = (position) => {
-    setAdsVisibility(prev => ({ ...prev, [position]: false }));
+    setAdsVisibility(prev => ({
+      ...prev,
+      [position]: false
+    }));
   };
 
   const handleShowAds = (position) => {
-    setAdsVisibility(prev => ({ ...prev, [position]: true }));
+    setAdsVisibility(prev => ({
+      ...prev,
+      [position]: true
+    }));
   };
 
-  const condoProperties     = properties.filter(p => p.type === "คอนโดมิเนียม");
-  const houseProperties     = properties.filter(p => p.type === "บ้านเดี่ยว");
-  const villaProperties     = properties.filter(p => p.type === "วิลล่า");
-  const townhouseProperties = properties.filter(p => p.type === "ทาวน์เฮ้าส์");
-  const apartmentProperties = properties.filter(p => p.type === "อพาร์ตเมนต์");
+  // Filter properties by type (ใช้ข้อมูลจาก properties ที่ import มา)
+  const condoProperties = properties.filter(property => property.type === "คอนโดมิเนียม");
+  const houseProperties = properties.filter(property => property.type === "บ้านเดี่ยว");
+  const villaProperties = properties.filter(property => property.type === "วิลล่า");
+  const townhouseProperties = properties.filter(property => property.type === "ทาวน์เฮ้าส์");
+  const apartmentProperties = properties.filter(property => property.type === "อพาร์ตเมนต์");
 
   return (
     <PageWrapper>

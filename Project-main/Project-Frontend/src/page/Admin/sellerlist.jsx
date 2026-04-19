@@ -165,7 +165,9 @@ const Sellerlist = () => {
                 <p><strong>เบอร์ติดต่อ :</strong> {selectedUser.phone ?? "-"}</p>
                 <p><strong>Email :</strong> {selectedUser.email ?? "-"}</p>
                 {selectedUser.role === "Seller" && (
-                  <a href={VerifyDoc} download >ดาวน์โหลดเอกสารยืนยันตัวตนคนขาย</a>
+                  <a href={`http://localhost:3000/download/${selectedUser.document}`} download>
+                    ดาวน์โหลดเอกสารยืนยันตัวตนคนขาย
+                  </a>
                 )}
               </div>
 

@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 import { Link, useNavigate } from 'react-router-dom';
-import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
 import swal from 'sweetalert';
 
 // ---------- Styled Components ---------- //
@@ -236,41 +235,13 @@ const MapEmbed = styled.iframe`
   border: none;
 `;
 
-const MapLoading = styled.div`
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #666;
-`;
-
+// ---------- Main Component ---------- //
 const PostProperty = () => {
   const [marker, setMarker] = useState({ lat: 13.7563, lng: 100.5018 });
   const [images, setImages] = useState([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadError, setUploadError] = useState('');
-  const [mapInstance, setMapInstance] = useState(null);
-  const [name, setName] = useState('');
-  const [propertyType, setPropertyType] = useState('');
-  const [saleType, setSaleType] = useState('');
-  const [landSize, setLandSize] = useState('');
-  const [floor, setFloor] = useState('');
-  const [bedrooms, setBedrooms] = useState('0');
-  const [bathrooms, setBathrooms] = useState('0');
-  const [dateValue, setDateValue] = useState('');
-  const [address, setAddress] = useState('');
-  const [priceSale, setPriceSale] = useState('');
-  const [priceRent, setPriceRent] = useState('');
-  const [description, setDescription] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
-
-  const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey,
-    libraries: ['places']
-  });
 
   // ฟังก์ชันตรวจสอบประเภทไฟล์ (ไม่รับ GIF)
   const isValidImageType = (file) => {
@@ -364,81 +335,37 @@ const PostProperty = () => {
     document.getElementById('file-input').click();
   };
 
-  const handleConfirmClick = async () => {
+  const handleConfirmClick = () => {
     if (images.length === 0) {
       swal("คำเตือน", "กรุณาอัพโหลดรูปภาพอย่างน้อย 1 รูป", "warning");
       return;
     }
 
-    if (!name.trim() || !address.trim() || !propertyType || !saleType) {
-      swal("คำเตือน", "กรุณากรอกข้อมูลให้ครบทุกช่องที่สำคัญ", "warning");
-      return;
-    }
-
-    if (saleType === 'ขาย' && !priceSale.trim()) {
-      swal("คำเตือน", "กรุณากรอกราคาเพื่อขาย", "warning");
-      return;
-    }
-
-    if (saleType === 'เช่า' && !priceRent.trim()) {
-      swal("คำเตือน", "กรุณากรอกราคาเพื่อเช่า", "warning");
-      return;
-    }
-
-    const confirmed = await swal({
-      title: "ยืนยันการโพสต์",
-      text: "คุณแน่ใจหรือว่าต้องการโพสต์ประกาศนี้?",
-      icon: "warning",
-      buttons: ["ยกเลิก", "ยืนยัน"],
-      dangerMode: true,
-    });
-
-    if (!confirmed) return;
-
-    setIsSubmitting(true);
-
-    try {
-      const formData = new FormData()
-      formData.append('name', name.trim())
-      formData.append('address', address.trim())
-      formData.append('priceSale', saleType === 'ขาย' ? priceSale.trim() : '')
-      formData.append('priceRent', saleType === 'เช่า' ? priceRent.trim() : '')
-      formData.append('type', propertyType)
-      formData.append('saleType', saleType)
-      formData.append('landSize', landSize.trim())
-      formData.append('floor', floor.trim())
-      formData.append('bedrooms', bedrooms)
-      formData.append('bathrooms', bathrooms)
-      formData.append('description', description.trim())
-      formData.append('latitude', String(marker.lat))
-      formData.append('longitude', String(marker.lng))
-
-      images.forEach((imageFile, index) => {
-        if (imageFile.file) {
-          formData.append('images', imageFile.file)
+    swal(
+      "ยืนยันการโพสต์",
+      "คุณแน่ใจหรือว่าต้องการโพสต์ประกาศนี้?",
+      "warning",
+      {
+        buttons: {
+          cancel: "ยกเลิก",
+          confirm: "ยืนยัน"
         }
-      })
-
-      const response = await fetch('http://localhost:3000/api/properties', {
-        method: 'POST',
-        body: formData
-      })
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'เกิดข้อผิดพลาดในการโพสต์ข้อมูล');
       }
-
-      swal("สำเร็จ!", "ประกาศของคุณถูกโพสต์เรียบร้อยแล้ว", "success");
-      setTimeout(() => {
-        navigate('/seller/homeseller');
-      }, 1500);
-    } catch (error) {
-      swal("ไม่สำเร็จ", error.message || 'เกิดข้อผิดพลาด', 'error');
-    } finally {
-      setIsSubmitting(false);
-    }
+    ).then((value) => {
+      if (value) {
+        // ในที่นี้คุณสามารถส่งข้อมูล images ไปยัง backend ได้
+        console.log('Images to upload:', images);
+        
+        swal(
+          "สำเร็จ!",
+          "ประกาศของคุณถูกโพสต์เรียบร้อยแล้ว",
+          "success"
+        );
+        setTimeout(() => {
+          navigate("/seller/homeseller");
+        }, 1500);
+      }
+    });
   };
 
   const mapUrl = `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3875.4669646932744!2d${marker.lng}!3d${marker.lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTMuNzU2MiDCsDUwJzEwLjciTiAxMDAuNTAxOCDCsDMwJzAuNiJF!5e0!3m2!1sth!2sth!4v1234567890`;
@@ -519,85 +446,59 @@ const PostProperty = () => {
         )}
 
         <Label>ชื่ออสังหา</Label>
-        <Input
-          placeholder="ใส่ชื่ออสังหา"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+        <Input placeholder="ใส่ชื่ออสังหา" />
 
         <Label>ประเภทอสังหา</Label>
-        <Select
-          value={propertyType}
-          onChange={(e) => setPropertyType(e.target.value)}
-        >
-          <option value="">ประเภทอสังหา</option>
-          <option value="คอนโดมิเนียม">คอนโดมิเนียม</option>
-          <option value="บ้านเดี่ยว">บ้านเดี่ยว</option>
-          <option value="บ้านแฝด">บ้านแฝด</option>
-          <option value="วิลล่า">วิลล่า</option>
-          <option value="ทาวน์เฮ้าส์">ทาวน์เฮ้าส์</option>
-          <option value="ที่ดิน">ที่ดิน</option>
-          <option value="อพาร์ตเมนต์">อพาร์ตเมนต์</option>
+        <Select>
+          <option>ประเภทอสังหา</option>
+          <option>คอนโด</option>
+          <option>บ้านเดี่ยว</option>
+          <option>บ้านแฝด</option>
+          <option>วิลล่า</option>
+          <option>ทาวน์เฮ้าส์</option>
+          <option>ที่ดิน</option>
+          <option>อพาร์ทเมนท์</option>
         </Select>
 
         <Label>ขายหรือเช่า</Label>
-        <Select
-          value={saleType}
-          onChange={(e) => setSaleType(e.target.value)}
-        >
-          <option value="">ขายหรือเช่า</option>
-          <option value="ขาย">ขาย</option>
-          <option value="เช่า">เช่า</option>
+        <Select>
+          <option>ขายหรือเช่า</option>
+          <option>ขาย</option>
+          <option>เช่า</option>
         </Select>
 
         <Row>
           <div>
             <Label>ขนาดที่ดิน</Label>
-            <Input
-              placeholder="ตารางเมตร"
-              value={landSize}
-              onChange={(e) => setLandSize(e.target.value)}
-            />
+            <Input placeholder="ตารางเมตร" />
           </div>
           <div>
             <Label>ชั้น</Label>
-            <Input
-              type="number"
-              min="0"
-              placeholder="0"
-              value={floor}
-              onChange={(e) => setFloor(e.target.value)}
-            />
+            <Input type="number" min="0" placeholder="0"/>
           </div>
         </Row>
 
         <Row>
           <div>
             <Label>ห้องนอน</Label>
-            <Select
-              value={bedrooms}
-              onChange={(e) => setBedrooms(e.target.value)}
-            >
-              <option value="0">0</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
+            <Select>
+              <option>0</option>
+              <option>1</option>
+              <option>2</option>
+              <option>3</option>
+              <option>4</option>
+              <option>5</option>
             </Select>
           </div>
           <div>
             <Label>ห้องน้ำ</Label>
-            <Select
-              value={bathrooms}
-              onChange={(e) => setBathrooms(e.target.value)}
-            >
-              <option value="0">0</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
+            <Select>
+              <option>0</option>
+              <option>1</option>
+              <option>2</option>
+              <option>3</option>
+              <option>4</option>
+              <option>5</option>
             </Select>
           </div>
         </Row>
@@ -605,20 +506,12 @@ const PostProperty = () => {
         <Row>
           <div>
             <Label>วันที่สร้าง</Label>
-            <Input
-              type="date"
-              value={dateValue}
-              onChange={(e) => setDateValue(e.target.value)}
-            />
+            <Input type="date" placeholder="DD/MM/YYYY" />
           </div>
         </Row>
 
         <Label>ที่อยู่</Label>
-        <TextArea
-          placeholder="ใส่ที่อยู่"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-        />
+        <TextArea placeholder="ใส่ที่อยู่" />
       </FormCard>
 
       {/* Right Column */}
@@ -626,81 +519,28 @@ const PostProperty = () => {
         <MapCard>
           <Title>Google Map</Title>
           <MapContainer>
-          {isLoaded ? (
-            <GoogleMap
-              key={`${marker.lat}-${marker.lng}`}
-              mapContainerStyle={{ width: '100%', height: '100%' }}
-              center={marker}
-              zoom={14}
-              onLoad={(map) => setMapInstance(map)}
-              onUnmount={() => setMapInstance(null)}
-              onClick={(event) => {
-                if (event.latLng) {
-                  setMarker({
-                    lat: event.latLng.lat(),
-                    lng: event.latLng.lng()
-                  });
-                }
-              }}
-              options={{
-                disableDefaultUI: true,
-                clickableIcons: false
-              }}
-            >
-              <Marker
-                position={marker}
-                draggable={true}
-                onDragEnd={(event) => {
-                  if (event.latLng) {
-                    setMarker({
-                      lat: event.latLng.lat(),
-                      lng: event.latLng.lng()
-                    });
-                  }
-                }}
-              />
-            </GoogleMap>
-          ) : (
-            <MapLoading>Loading map…</MapLoading>
-          )}
-        </MapContainer>
-        <Label>ตำแหน่งพิกัด</Label>
-        <Subtitle>
-          Lat: {marker.lat.toFixed(6)} | Lng: {marker.lng.toFixed(6)}
-        </Subtitle>
+            <MapEmbed
+              src={mapUrl}
+              allowFullScreen=""
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            ></MapEmbed>
+          </MapContainer>
         </MapCard>
 
         <FormCard>
           <Label>ราคาอสังหา (สำหรับขาย)</Label>
-          <Input
-            type="number"
-            placeholder="ใส่ราคา"
-            value={priceSale}
-            onChange={(e) => setPriceSale(e.target.value)}
-            disabled={saleType === 'เช่า'}
-          />
+          <Input type="number" placeholder="ใส่ราคา" />
 
           <Label>ราคาอสังหา (สำหรับเช่า)</Label>
-          <Input
-            type="number"
-            placeholder="ใส่ราคา"
-            value={priceRent}
-            onChange={(e) => setPriceRent(e.target.value)}
-            disabled={saleType === 'ขาย'}
-          />
+          <Input type="number" placeholder="ใส่ราคา" />
 
           <Label>คำอธิบายอสังหา</Label>
-          <TextArea
-            placeholder="ใส่คำอธิบายอสังหา"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
+          <TextArea placeholder="ใส่คำอธิบายอสังหา" />
 
           <ButtonRow>
             <CancelBtn as={Link} to="/seller/homeseller">Cancel</CancelBtn>
-            <ConfirmBtn onClick={handleConfirmClick} disabled={isSubmitting}>
-              {isSubmitting ? 'กำลังส่ง...' : 'Confirm Sale'}
-            </ConfirmBtn>
+            <ConfirmBtn onClick={handleConfirmClick}>Confirm Sale</ConfirmBtn>
           </ButtonRow>
         </FormCard>
       </div>
